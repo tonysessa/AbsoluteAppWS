@@ -1,0 +1,43 @@
+                <asp:Panel ID="Panel_Related_{{ContentTable}}_List" CssClass="well with-footer" runat="server" Visible="true" EnableViewState="false">
+					<table class="table table-hover">
+                        <thead class="bordered-darkorange">
+                            <tr>
+                                <th>
+                                    {{ContentTable}}</th>
+                                <th style="width: 5%;">
+                                     Action</ th >
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <asp:Repeater ID="Repeater_Immobili" runat="server" EnableViewState="false">
+                        <ItemTemplate>
+                            <tr>
+                                <td>
+                                    <asp:HyperLink ID="HyperLink_Title" runat="server" ToolTip="Edit"></asp:HyperLink></td>
+                                <td>
+                                    <asp:HyperLink ID="HyperLink_Update" runat="server" ToolTip="Edit"><i class="icons icon-main icon-pencil"></i></asp:HyperLink>
+                                    <asp:HyperLink ID="HyperLink_Delete" runat="server" ToolTip="Delete"><i class="icons icon-main icon-trash"></i></asp:HyperLink></td>
+                            </tr>
+                        </ItemTemplate>
+                        </asp:Repeater>
+                        </tbody>
+                     </table>
+					<div class="footer">
+                        <asp:HyperLink ID = "HyperLink_Immobili" runat="server" CssClass="btn btn-palegreen">+ Add {{ContentTable}}</asp:HyperLink>
+                     </div>
+                </asp:Panel>
+
+                <asp:Panel ID="Panel_Related_{{ContentTable}}_Form" CssClass="content-column-related" runat="server" DefaultButton="Button_Related{{ContentTable}}_Save" Visible="false">
+					<div class="widget">
+						<div class="widget-header bordered-bottom bordered-blue">
+							<span class="widget-caption">
+								<asp:Literal ID="Literal_Cms_RecordDetail" runat="server">Record Detail</asp:Literal> {{ContentTable}}</span>
+						</div>
+                        <asp:Panel ID="Panel_Form" runat="server" CssClass="widget-body">
+							{{ColumnDataCode_InputHtml}}
+							<asp:Button CssClass="btn btn-palegreen" ID="Button_Related_{{ContentTable}}_Save" Text="Save" ValidationGroup="{{ContentTable}}" runat="server" OnClick="Button_Related_{{ContentTable}}_Save_Click" />
+							<asp:Button CssClass="btn btn-danger" ID="Button_Related_{{ContentTable}}_Cancel" Text="Exit" CausesValidation="false" runat="server" OnClick="Button_Related_{{ContentTable}}_Cancel_Click" />
+						</asp:Panel>
+                    </div>
+                    <!-- END INPUTS BOX -->
+                </asp:Panel>

@@ -1,0 +1,6 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/2019/absoluteAppWs/absoluteAppWs/bin
+/2019/absoluteAppWs/absoluteAppWs/obj/Debug

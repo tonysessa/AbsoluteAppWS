@@ -1,0 +1,1013 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Dynamic;
+using System.Text;
+using System.Runtime.Serialization;
+using System.Reflection;
+using System.Data;
+using System.Data.Entity.Core.Objects;
+using System.Data.Entity.Infrastructure;
+//
+using DbModel;
+using DbModel.common;
+using it.wlf;
+
+namespace dataLibs
+{
+    #region {{ContentTable}}
+    [DataContract]
+    public class {{ContentTable}}ListOptions
+    {
+        [DataMember]
+        public String searchText = null;
+
+        [DataMember]
+        public Boolean sortAscending = true;
+
+        [DataMember]
+        public String sortBy = null;
+
+        [DataMember]
+        public Boolean includeDeleted = false;
+
+        [DataMember]
+        public Int32? Uid_CreationUser = null;
+
+        [DataMember]
+        public Int32 numTop = 0;
+
+{{FieldList_ListOptions}}
+        [DataMember]
+        public Paging paging = null;
+
+        public String sqlOrderByExpression
+        {
+            get
+            {
+                return (String.IsNullOrEmpty(sortBy) ? "Uid" : sortBy) + " " + (sortAscending ? "ascending" : "descending");
+            }
+        }
+    }
+
+    [DataContract]
+    public class {{ContentTable}}ItemResponse
+    {
+        [DataMember]
+        public {{ContentTable}} item = null;
+
+        [DataMember]
+        public Boolean Success = true;
+
+        [DataMember]
+        public Exception Ex = null;
+
+        [DataMember]
+        public String Error = null;
+    }
+
+    [DataContract]
+    public class {{ContentTable}}ListResponse
+    {
+        [DataMember]
+        public List<{{ContentTable}}> items = null;
+
+        [DataMember]
+        public Paging paging = null;
+
+        [DataMember]
+        public Boolean Success = true;
+
+        [DataMember]
+        public Exception Ex = null;
+
+        [DataMember]
+        public String Error = null;
+    }
+    #endregion
+
+    public partial class CmsDataBaseLibs: CmsPublishDataLibs
+    {
+		#region Generic Method
+        // ******************************************************************************* //
+        // Prendo l'elenco dei record
+        // ******************************************************************************* //
+        public {{ContentTable}}ListResponse {{ContentTable}}List(MyHeader header, {{ContentTable}}ListOptions rq)
+        {
+
+            {{ContentTable}}ListResponse results = new {{ContentTable}}ListResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    IQueryable<{{ContentTable}}> query = from t in dbCtx.Context.{{ContentTable}}														  					  
+{{FileClassInclude}}{{FieldList_Where}}{{FieldList_WhereTextSearch}} &&
+															(t.Uid_CmsNlsContext == header.cmsCmsNlsContext.Uid) &&
+															(t.StatusFlag != (int)EnumCmsContentStatus.Deleted || (t.StatusFlag == (int)EnumCmsContentStatus.Deleted && rq.includeDeleted))
+                                                          select t;
+					
+					// Paging
+                    if (rq.paging == null)
+                    {
+                        results.items = query.OrderBy(rq.sqlOrderByExpression).ToList();
+                    }
+                    else
+                    {
+                        results.paging = new Paging();
+                        results.paging.PageSize = rq.paging.PageSize <= 0 ? 20 : rq.paging.PageSize;
+                        results.paging.PageNumber = rq.paging.PageNumber >= 0 ? rq.paging.PageNumber : 0;
+                        results.paging.TotalRows = query.Count();
+                        results.paging.TotalPages = (int)Math.Ceiling((double)results.paging.TotalRows / (double)results.paging.PageSize);
+                        results.items = query.OrderBy(rq.sqlOrderByExpression).Skip(results.paging.PageNumber * results.paging.PageSize).Take(results.paging.PageSize).ToList();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                results.Ex = ex;
+                results.Error = ex.Message;
+                results.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            //
+            return results;
+        }
+
+        // ******************************************************************************* //
+        // Prendo l'elenco dei record per il BackOffice
+        // ******************************************************************************* //
+		public {{ContentTable}}ListResponse {{ContentTable}}ListCms(MyHeader header, {{ContentTable}}ListOptions rq)
+        {
+
+            {{ContentTable}}ListResponse results = new {{ContentTable}}ListResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    IQueryable<{{ContentTable}}> query = from t in dbCtx.Context.{{ContentTable}}														  				  
+{{FileClassInclude}}{{FieldList_Where}}{{FieldList_WhereTextSearch}} &&														  
+														  (t.StatusFlag != (int)EnumCmsContentStatus.Deleted || (t.StatusFlag == (int)EnumCmsContentStatus.Deleted && rq.includeDeleted))
+                                                          select t;
+					
+					// Paging
+                    if (rq.paging == null)
+                    {
+                        results.items = query.OrderBy(rq.sqlOrderByExpression).ToList();
+                    }
+                    else
+                    {
+                        results.paging = new Paging();
+                        results.paging.PageSize = rq.paging.PageSize <= 0 ? 20 : rq.paging.PageSize;
+                        results.paging.PageNumber = rq.paging.PageNumber >= 0 ? rq.paging.PageNumber : 0;
+                        results.paging.TotalRows = query.Count();
+                        results.paging.TotalPages = (int)Math.Ceiling((double)results.paging.TotalRows / (double)results.paging.PageSize);
+                        results.items = query.OrderBy(rq.sqlOrderByExpression).Skip(results.paging.PageNumber * results.paging.PageSize).Take(results.paging.PageSize).ToList();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                results.Ex = ex;
+                results.Error = ex.Message;
+                results.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            //
+            return results;
+        }
+
+		// ******************************************************************************* //
+        // Prendo un record
+        // ******************************************************************************* //
+        public {{ContentTable}}ItemResponse {{ContentTable}}Get(MyHeader header, String Uid)
+        {
+
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    result.item = (from t in dbCtx.Context.{{ContentTable}}
+{{FileClassInclude}}
+								where (t.Uid == Uid) &&
+								(t.Uid_CmsNlsContext == header.cmsCmsNlsContext.Uid) &&
+								(t.StatusFlag != (int)EnumCmsContent.Deleted)
+								select t).FirstOrDefault();
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            //
+            return result;
+        }
+
+        // ******************************************************************************* //
+        // Prendo un record
+        // ******************************************************************************* //
+        public {{ContentTable}}ItemResponse {{ContentTable}}GetCms(MyHeader header, String Uid)
+        {
+
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    result.item = (from t in dbCtx.Context.{{ContentTable}}
+{{FileClassInclude}}
+								where (t.Uid == Uid)
+								select t).FirstOrDefault();
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            //
+            return result;
+        }
+
+		// ******************************************************************************* //
+        // Prendo un record
+        // ******************************************************************************* //
+        public {{ContentTable}}ItemResponse {{ContentTable}}GetForPublish(MyHeader header, String Uid)
+        {
+
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    result.item = (from t in dbCtx.Context.{{ContentTable}}
+{{FileClassInclude}}
+								where (t.Uid == Uid) &&
+								(t.Uid_CmsNlsContext == header.cmsCmsNlsContext.Uid)
+								select t).FirstOrDefault();
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            //
+            return result;
+        }
+
+        // ******************************************************************************* //
+        // Prendo un record e salvo la versione precedente
+        // ******************************************************************************* //
+		{{startCommentPublish}}
+		public {{ContentTable}}ItemResponse {{ContentTable}}GetForUpdate(MyHeader header, String uid)
+		{
+			return {{ContentTable}}GetForUpdate(header, uid, "");
+		}
+		public {{ContentTable}}ItemResponse {{ContentTable}}GetForUpdate(MyHeader header, String uid, String cmsHistoryId )
+        {
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            // securit
+            //if (CheckBoAccessToken(new AclPermission("CmsSection", "{{ContentTable}}", true, true, false)) == null)
+            //{
+            //    result.Error = ServiceResponse.ERROR_AUTHORIZATION;
+            //    return result;
+            //}
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    {{ContentTable}} itm = (from t in dbCtx.db.{{ContentTable}}
+{{FileClassInclude}}
+                                 where (t.Uid == uid) &&
+								 (t.Uid_CmsNlsContext == header.cmsCmsNlsContext.Uid)
+                                 select t).FirstOrDefault();
+
+                    // se versione committata
+                    if (itm != null && itm.IsPublished)
+                    {
+                        String json = {{ContentTable}}_db2JSON(itm.Uid);
+                        {{ContentTable}}_AddToHistory(header, json, itm);
+                        itm.VersionCurrent++;
+                        itm.Uid_PublishUser = null;
+                        itm.PublishDate = null;
+                        dbCtx.SaveChanges();
+                    }
+                    //
+                    result.item = itm;
+
+                    // 
+                    if (!String.IsNullOrEmpty(cmsHistoryId))
+                    {
+                        long hId = Int21h.atol(cmsHistoryId);
+                        CmsHistory h = dbCtx.Context.CmsHistory.Where(t => t.Id == hId).FirstOrDefault();
+                        {{ContentTable}} n0 = Int21h.jsonDecode<{{ContentTable}}>(h.SerializedObject);
+                        n0.isStage = true;
+                        n0.VersionCurrent = itm.VersionCurrent;
+                        n0.VersionPublished = itm.VersionPublished;
+                        {{ContentTable}}_VersioningMoveFromDb(header, uid, n0);
+                        return {{ContentTable}}Get(header, uid);
+                    }
+                }
+                if (result.item != null)
+                {
+                    result.Success = true;
+                }
+                else {
+                    result.Error = "ERROR_NOTFOUND";
+                    result.Success = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            //
+            return result;
+        }		
+		{{endCommentPublish}}
+
+        // ******************************************************************************* //
+        // Inserisco o modifico un record
+        // ******************************************************************************* //
+        public {{ContentTable}}ItemResponse {{ContentTable}}Upsert(MyHeader header, {{ContentTable}} data)
+        {
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    bool isInsert = true;
+                    if (!String.IsNullOrEmpty(data.Uid))
+                        isInsert = false;
+
+                    if (!String.IsNullOrEmpty(data.Uid))
+                    {
+                        result.item = (from t in dbCtx.Context.{{ContentTable}}									  
+{{FileClassInclude}}
+                                       where (t.Uid == data.Uid) &&
+									   (t.Uid_CmsNlsContext == header.cmsCmsNlsContext.Uid)
+                                       select t).FirstOrDefault();
+
+                        if (result.item != null)
+                        {
+							isInsert = false;
+                            result.item.UpdateDate = DateTime.Now;
+                            result.item.Uid_UpdateUser = header.cmsUserUid;
+							result.item.Uid_CmsNlsContext = header.cmsCmsNlsContext.Uid;
+                        }
+                        else
+                        {
+							isInsert = true;
+                            result.item = new {{ContentTable}}();
+							result.item.Uid = data.Uid;
+                            result.item.Uid_CreationUser = header.cmsUserUid;
+							result.item.Uid_CmsNlsContext = header.cmsCmsNlsContext.Uid;
+
+							{{startCommentOrd}}
+							Int32? mm = 1;
+							try
+							{
+								mm = (Int32)dbCtx.Context.{{ContentTable}}.Max(m => m.lOrd);
+								mm++;
+							}
+							catch
+							{
+	                        
+							}
+							result.item.lOrd = (Int32)mm;
+							{{endCommentOrd}}
+
+                            //
+                            if (data.CreationDate.Equals(DateTime.MinValue))
+                                result.item.CreationDate = DateTime.Now;
+                            else
+                                result.item.CreationDate = data.CreationDate;
+                        }
+                    }
+                    else
+                    {
+						isInsert = true;
+                        result.item = new {{ContentTable}}();
+						result.item.Uid = Int21h.NewGuid();
+                        result.item.Uid_CreationUser = header.cmsUserUid;
+						result.item.Uid_CmsNlsContext = header.cmsCmsNlsContext.Uid;
+
+						{{startCommentOrd}}
+						Int32? mm = 1;
+						try
+						{
+                            mm = (Int32)(dbCtx.Context.{{ContentTable}}.Max(m => m.lOrd));
+                            mm++;
+						}
+						catch
+						{
+	                        
+						}
+						result.item.lOrd = (Int32)mm;
+						{{endCommentOrd}}
+
+                        //
+                        if (data.CreationDate.Equals(DateTime.MinValue))
+                            result.item.CreationDate = DateTime.Now;
+                        else
+                            result.item.CreationDate = data.CreationDate;
+						result.item.UpdateDate = DateTime.Now;
+                    }
+
+                    //
+                    if (result != null)
+                    {
+                        //
+{{FieldList_Upsert}}
+                    }
+
+                    // save data
+                    if (isInsert)
+                        dbCtx.Context.{{ContentTable}}.Add(result.item);
+                    //
+                    dbCtx.Context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            //
+            return result;
+        }
+
+		// ******************************************************************************* //
+        // Elimino il record
+        // ******************************************************************************* //
+        public {{ContentTable}}ItemResponse {{ContentTable}}Delete(MyHeader header, {{ContentTable}} data)
+        {
+
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+
+                    result.item = (from t in dbCtx.Context.{{ContentTable}}
+                                   where (t.Uid == data.Uid) &&
+								   (t.Uid_CmsNlsContext == header.cmsCmsNlsContext.Uid)
+                                   select t).FirstOrDefault();
+
+                    if (result != null)
+                    {
+                        result.item.UpdateDate = DateTime.Now;
+                        result.item.Uid_UpdateUser = header.cmsUserUid;
+                        result.item.StatusFlag = (int)EnumCmsContent.Deleted;
+
+                        //
+                        dbCtx.Context.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                //
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+
+				#region Log Error
+                if (isLogActive())
+                {
+                    objLogUtil.Log(getLogFile(), ex.ToString());
+                    if (ex.InnerException != null)
+                        objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+                }
+                #endregion
+            }
+            //
+            return result;
+        }       
+
+		// ******************************************************************************* //
+        // Ordino i record
+        // ******************************************************************************* //
+		// -1: mette uid prima di refToUid
+        // +1: mette uid dopo di refToUid
+		{{startCommentOrd}}
+		public {{ContentTable}}ItemResponse {{ContentTable}}SetOrder(MyHeader header, String uid, String refToUid, Int32 action)
+        {
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                // {{ContentTable}}
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+
+					{{ContentTable}} that = dbCtx.Context.{{ContentTable}}.Where(t => t.Uid_CmsNlsContext == header.cmsCmsNlsContext.Uid && t.Uid == uid).FirstOrDefault();
+                    {{ContentTable}} pivot = dbCtx.Context.{{ContentTable}}.Where(t => t.Uid == refToUid).FirstOrDefault();
+
+                    decimal pivot_Ord = pivot.Ord.Value;
+                    decimal pivot_lOrd = pivot.lOrd;
+
+                    if (action == -1)
+                    {
+                        dbCtx.Context.Database.ExecuteSqlCommand("update {{ContentTable}} set lOrd=lOrd+1 where Uid_CmsNlsContext='" + that.Uid_CmsNlsContext + "' and Ord>=" + (long)pivot_Ord + " and Uid!='" + uid + "'");
+                        that.lOrd = (long)pivot_lOrd;
+                    }
+                    else if (action == 1)
+                    {
+                        dbCtx.Context.Database.ExecuteSqlCommand("update {{ContentTable}} set lOrd=lOrd+2 where Uid_CmsNlsContext='" + that.Uid_CmsNlsContext + "' and Ord>" + (long)pivot_Ord + " and Uid!='" + uid + "'");
+                        that.lOrd = (long)(pivot_lOrd + 1);
+                    }
+					else if (action == 0)
+                    {
+                        that.lOrd = (long)(pivot_lOrd + 1);
+                    }
+                   
+                    // order status
+                    CmsOrderStatus os = dbCtx.Context.CmsOrderStatus.Where(t => t.CmsNlsContext.Uid == header.cmsCmsNlsContext.Uid && t.ContentName == "{{ContentTable}}").FirstOrDefault();
+                    if (os == null)
+                        dbCtx.Context.CmsOrderStatus.Add(new CmsOrderStatus("{{ContentTable}}", true, header.cmsCmsNlsContext.Uid));
+                    else
+                        os.RequirePublish = 1;
+
+					//
+					dbCtx.SaveChanges();
+                }
+                return {{ContentTable}}Get(header, uid);
+            }
+            catch (Exception ex)
+            {
+                //
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            //
+            return result;
+        }     
+		{{endCommentOrd}}
+
+
+		// ******************************************************************************* //
+        // Pubblico una {{ContentTable}} o rispristino un nuvo record
+        // ******************************************************************************* //
+		{{startCommentPublish}}
+        private String {{ContentTable}}_VersioningMoveFromDb(MyHeader header, String _uid, {{ContentTable}} ripristina = null, NewContextInfo newContext = null)
+        {
+            {{ContentTable}} n0 = ripristina != null ? ripristina : Int21h.jsonDecode<{{ContentTable}}>({{ContentTable}}_db2JSON(_uid));
+            if (newContext != null)
+                n0.PrepareForCopy(newContext);
+            // vado sul db di produzione se devo pubbicare, altrimenti su stage
+            using (MyEntityContext dbCtx = new MyEntityContext(ripristina != null || newContext != null, false))
+            {
+                {{ContentTable}} n1 = dbCtx.db.{{ContentTable}}.Where(t => t.Uid == n0.Uid).FirstOrDefault();
+                n1 = VersionableObjectCopy(n0, n1 == null ? new {{ContentTable}}(true) : n1) as {{ContentTable}};
+                if (n1.ToAdd)
+                    dbCtx.db.{{ContentTable}}.Add(n1);
+
+                // Publish Related
+				//PublishRelated<RelatedTable>(dbCtx, n1, "RelatedTable", "Uid_{{ContentTable}}n", n1.__RelatedTable, null, null, newContext != null);
+
+                //
+                dbCtx.db.SaveChanges();
+            }
+            // aggiorno numero di versione corrente nel db di stage
+            using (MyEntityContext dbCtx = new MyEntityContext())
+            {
+                // copia
+                if (newContext != null)
+                {
+                    dbCtx.SqlExecuteNonQuery("update {{ContentTable}} set " +
+                                            "StatusFlag = " + (int)EnumCmsContentStatus.Draft +
+                                            ",Uid_PublishUser = NULL " +
+                                            ",Uid_UpdateUser = '" + header.cmsUserUid + "' " +
+                                            ",UpdateDate = getdate() " +
+                                            ",PublishDate = NULL " +
+                                            ",VersionPublished = 0 " +
+                                            ",VersionCurrent = 1 " +
+                                            //",PublishOnlineDate = NULL " +
+                                            //",PublishOfflineDate = NULL " +
+                                            "where Uid='" + n0.Uid + "'");
+                }
+                else if (ripristina == null) // PUBBLICAZIONE
+                {
+                    dbCtx.SqlExecuteNonQuery("update {{ContentTable}} set " +
+                                            "VersionPublished = VersionCurrent " +
+                                            ",Uid_PublishUser = '" + header.cmsUserUid + "' " +
+                                            ",PublishDate = getdate() " +
+                                            "where Uid='" + n0.Uid + "'");
+                }
+                else // RECOVER 
+                {
+                    dbCtx.SqlExecuteNonQuery("update {{ContentTable}} set " +
+                                            "StatusFlag = " + (int)EnumCmsContentStatus.Draft +
+                                            ",Uid_PublishUser = NULL " +
+                                            ",Uid_UpdateUser = '" + header.cmsUserUid + "' " +
+                                            ",UpdateDate = getdate() " +
+                                            ",PublishDate = NULL " +
+                                            //",PublishOnlineDate = NULL " +
+                                            //",PublishOfflineDate = NULL " +
+                                            "where Uid='" + n0.Uid + "'");
+                }
+                dbCtx.SaveChanges();
+                //
+                return n0.Uid;
+            }
+        }
+		{{endCommentPublish}}
+		#endregion
+
+		#region Publish Method
+        {{startCommentOrd}}
+		public OrderPublishStatusResponse {{ContentTable}}_PublishOrderStatus(MyHeader header)
+        {
+            OrderPublishStatusResponse result = new OrderPublishStatusResponse();
+            //
+            // security
+            //if (CheckBoAccessToken(new AclPermission("CmsSection", "{{ContentTable}}", true, false, false)) == null)
+            //{
+            //    result.Error = ServiceResponse.ERROR_AUTHORIZATION;
+            //    return result;
+            //}
+            //
+            try
+            {
+                //
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    CmsOrderStatus os = dbCtx.Context.CmsOrderStatus.Where(t => t.ContentName == "{{ContentTable}}" && t.Uid_CmsNlsContext == header.cmsCmsNlsContext.Uid).FirstOrDefault();
+                    if (os != null)
+                        result.RequirePublish = os.RequirePublish != 0;
+                    result.Success = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+
+            //
+            return result;
+        }		
+		public ServiceResponse {{ContentTable}}_PublishOrder(MyHeader header)
+        {
+            ServiceResponse result = new ServiceResponse();
+            // securit
+            //if (CheckBoAccessToken(new AclPermission("CmsSection", "{{ContentTable}}", true, false, true)) == null)
+            //{
+            //    result.Error = ServiceResponse.ERROR_AUTHORIZATION;
+            //    return result;
+            //}
+            try
+            {
+                Dictionary<String, decimal> items = new Dictionary<String, decimal>();
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    foreach (var itm in dbCtx.Context.{{ContentTable}}.Where(t => t.Uid_CmsNlsContext == header.cmsCmsNlsContext.Uid))
+                        items[itm.Uid] = itm.lOrd;
+                }
+                using (MyEntityContext dbCtx = new MyEntityContext(false, true))
+                {
+                    foreach (String uid in items.Keys)
+                    {
+                        var dbItem = dbCtx.Context.{{ContentTable}}.Where(t => t.Uid == uid).FirstOrDefault();
+                        if (dbItem != null)
+                            dbItem.lOrd = (long)items[uid];
+                    }
+
+                    //
+                    dbCtx.Context.SaveChanges();
+                }
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    CmsOrderStatus os = dbCtx.Context.CmsOrderStatus.Where(t => t.ContentName == "{{ContentTable}}" && t.Uid_CmsNlsContext == header.cmsCmsNlsContext.Uid).FirstOrDefault();
+                    if (os != null)
+                        os.RequirePublish = 0;
+                    dbCtx.Context.SaveChanges();
+                    result.Success = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            finally
+            {
+                CacheManager.that.RemoveAllFromCacheBO(header.cmsCmsNlsContext, "{{ContentTable}}");
+            }
+
+			//
+			return result;
+        }
+		{{endCommentOrd}}
+
+        // ******************************************************************************* //
+        // Copia un record
+        // ******************************************************************************* //
+		{{startCommentPublish}}
+        public {{ContentTable}}ItemResponse {{ContentTable}}_Versioning_Copy(MyHeader header, String uid, NewContextInfo ctxInfo)
+        {
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            // securit
+            //if (CheckBoAccessToken(new AclPermission("CmsSection", "{{ContentTable}}", true, false, true)) == null)
+            //{
+            //    result.Error = ServiceResponse.ERROR_AUTHORIZATION;
+            //    return result;
+            //}
+            try
+            {
+                String newUid = {{ContentTable}}_VersioningMoveFromDb(header, uid, null, ctxInfo);
+                return {{ContentTable}}Get(header, newUid);
+            }
+            catch (ConstraintException ex)
+            {
+                result.Ex = ex;
+                result.Error = "ConstraintException";
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            finally
+            {
+                //CacheManager.that.RemoveAllFromCache(header.cmsCmsNlsContext.Uid, "{{ContentTable}}");
+            }
+
+			//
+			return result;
+        }		
+		{{endCommentPublish}}
+		
+        // ******************************************************************************* //
+        // Pubblica una versione
+        // ******************************************************************************* //
+		{{startCommentPublish}}
+        public {{ContentTable}}ItemResponse {{ContentTable}}_Publish(MyHeader header, String uid)
+        {
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            // securit
+            //if (CheckBoAccessToken(new AclPermission("CmsSection", "{{ContentTable}}", true, false, true)) == null)
+            //{
+            //    result.Error = ServiceResponse.ERROR_AUTHORIZATION;
+            //    return result;
+            //}
+            try
+            {
+                {{ContentTable}}_VersioningMoveFromDb(header, uid, null);
+                return {{ContentTable}}Get(header, uid);
+            }
+            catch (ConstraintException ex)
+            {
+                result.Ex = ex;
+                result.Error = "ConstraintException";
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            catch (Exception ex)
+            {
+                //
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+            }
+            finally
+            {
+				// 
+				String cSetNames = "{{ContentTable}}";		// cSetNames = "{{ContentTable}}|OthersSetName"
+                CacheManager.that.RemoveAllFromCacheBO(header.cmsCmsNlsContext, cSetNames);
+            }
+
+			return result;
+        }        
+
+		// ******************************************************************************* //
+        // De-Pubblica una versione
+        // ******************************************************************************* //
+        public Boolean {{ContentTable}}_UnPublish(MyHeader header, String uid)
+        {
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            // securit
+            //if (CheckBoAccessToken(new AclPermission("CmsSection", "{{ContentTable}}", true, false, true)) == null)
+            //{
+            //    result.Error = ServiceResponse.ERROR_AUTHORIZATION;
+            //    return result;
+            //}
+            try
+            {
+                using (MyEntityContext ctxStg = new MyEntityContext(true, false))
+                {
+                    //ctxStg.SqlExecuteNonQuery("update {{ContentTable}} set VersionPublished = 0, PublishDate = null, Uid_PublishUser = null, PublishOnlineDate = null, PublishOfflineDate = null where Uid='" + uid + "'");
+                    ctxStg.SqlExecuteNonQuery("update {{ContentTable}} set VersionPublished = 0, PublishDate = null, Uid_PublishUser = null where Uid='" + uid + "'");
+                }
+                using (MyEntityContext ctxProd = new MyEntityContext(false, false))
+                {
+                    //ctxProd.SqlExecuteNonQuery("update {{ContentTable}} set StatusFlag = 2, PublishDate = null, Uid_PublishUser = null, PublishOnlineDate = null, PublishOfflineDate = null where Uid='" + uid + "'");
+                    ctxProd.SqlExecuteNonQuery("update {{ContentTable}} set StatusFlag = 2, PublishDate = null, Uid_PublishUser = null where Uid='" + uid + "'");
+                }
+
+				//
+				String cSetNames = "{{ContentTable}}";		// cSetNames = "{{ContentTable}}|OthersSetName"
+                CacheManager.that.RemoveAllFromCacheBO(header.cmsCmsNlsContext, cSetNames);
+            }
+            catch (Exception ex)
+            {
+				#region Log Error
+				if (isLogActive())
+				{
+	                objLogUtil.Log(getLogFile(), ex.ToString());
+					if (ex.InnerException != null)
+	                    objLogUtil.Log(getLogFile(), ex.InnerException.ToString());
+				}
+				#endregion
+
+                return false;
+            }
+            return true;
+        }           
+		{{endCommentPublish}}
+        #endregion
+
+        #region Add Method		
+        private String {{ContentTable}}_db2JSON(String uid)
+        {
+            String json;
+            using (MyEntityContext dbCtx = new MyEntityContext())
+            {
+                {{ContentTable}} itm = (from t in dbCtx.db.{{ContentTable}}
+{{FileClassInclude}}
+                                       where t.Uid == uid
+                                       select t).FirstOrDefault();
+                json = Int21h.jsonEncode(itm);
+            }
+            return json;
+        }
+		{{startCommentPublish}}
+        private long {{ContentTable}}_AddToHistory(MyHeader header, String json, ICmsContent content)
+        {
+            using (MyEntityContext dbCtx = new MyEntityContext())
+            {
+                CmsHistory h = new CmsHistory();
+                h.ContentName = content.ContentName;
+                h.CreationDate = DateTime.Now;
+                h.Uid_CreationUser = header.cmsUserUid;
+                h.SerializedObject = json;
+                h.Version = content.VersionCurrent;
+                h.PublishDate = content.PublishDate;
+                h.Uid_PublishUser = content.Uid_PublishUser;
+                h.Uid_CmsNlsContext = content.Uid_CmsNlsContext;
+                h.ContentUid = content.Uid;
+                dbCtx.db.CmsHistory.Add(h);
+                dbCtx.SaveChanges();
+                return (long)(h.Id);
+            }
+        }        
+		{{endCommentPublish}}
+        #endregion
+    }
+}
+

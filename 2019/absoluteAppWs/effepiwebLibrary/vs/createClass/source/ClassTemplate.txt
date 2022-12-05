@@ -1,0 +1,866 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Dynamic;
+using System.Text;
+using System.Runtime.Serialization;
+using System.Reflection;
+using System.Data;
+//
+using DbModel;
+
+namespace dataLibs
+{
+    #region {{ContentTable}}
+    [DataContract]
+    public class {{ContentTable}}ListOptions
+    {
+        [DataMember]
+        public String searchText = null;
+
+        [DataMember]
+        public Boolean sortAscending = true;
+
+        [DataMember]
+        public String sortBy = null;
+
+        [DataMember]
+        public Boolean includeDeleted = false;
+
+        [DataMember]
+        public Int32? {{Field_CreationUser}} = null;
+
+{{FieldList_ListOptions}}
+        [DataMember]
+        public Paging paging = null;
+
+        public String sqlOrderByExpression
+        {
+            get
+            {
+                return (String.IsNullOrEmpty(sortBy) ? "Uid" : sortBy) + " " + (sortAscending ? "ascending" : "descending");
+            }
+        }
+    }
+
+    [DataContract]
+    public class {{ContentTable}}ItemResponse
+    {
+        [DataMember]
+        public {{ContentTable}} item = null;
+
+        [DataMember]
+        public Boolean Success = true;
+
+        [DataMember]
+        public Exception Ex = null;
+
+        [DataMember]
+        public String Error = null;
+    }
+
+    [DataContract]
+    public class {{ContentTable}}ListResponse
+    {
+        [DataMember]
+        public List<{{ContentTable}}> items = null;
+
+        [DataMember]
+        public Paging paging = null;
+
+        [DataMember]
+        public Boolean Success = true;
+
+        [DataMember]
+        public Exception Ex = null;
+
+        [DataMember]
+        public String Error = null;
+    }
+    #endregion
+
+    public partial class CmsDataBaseLibs
+    {
+		#region Generic Method
+        // ******************************************************************************* //
+        // Prendo l'elenco dei record
+        // ******************************************************************************* //
+        public {{ContentTable}}ListResponse {{ContentTable}}List(MyHeader header, {{ContentTable}}ListOptions rq)
+        {
+
+            {{ContentTable}}ListResponse results = new {{ContentTable}}ListResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    IQueryable<{{ContentTable}}> query = from t in dbCtx.Context.{{ContentTable}}														  					  
+{{FileClassInclude}}{{FieldList_Where}}{{FieldList_WhereTextSearch}} &&
+														  (t.StatusFlag != (int)EnumCmsContentStatus.Deleted || (t.StatusFlag == (int)EnumCmsContentStatus.Deleted && rq.includeDeleted))
+                                                          select t;
+					
+					// Paging
+                    if (rq.paging == null)
+                    {
+                        results.items = query.OrderBy(rq.sqlOrderByExpression).ToList();
+                    }
+                    else
+                    {
+                        results.paging = new Paging();
+                        results.paging.PageSize = rq.paging.PageSize <= 0 ? 20 : rq.paging.PageSize;
+                        results.paging.PageNumber = rq.paging.PageNumber >= 0 ? rq.paging.PageNumber : 0;
+                        results.paging.TotalRows = query.Count();
+                        results.paging.TotalPages = (int)Math.Ceiling((double)results.paging.TotalRows / (double)results.paging.PageSize);
+                        results.items = query.OrderBy(rq.sqlOrderByExpression).Skip(results.paging.PageNumber * results.paging.PageSize).Take(results.paging.PageSize).ToList();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                results.Ex = ex;
+                results.Error = ex.Message;
+                results.Success = false;
+            }
+            //
+            return results;
+        }
+
+        // ******************************************************************************* //
+        // Prendo l'elenco dei record per il BackOffice
+        // ******************************************************************************* //
+		public {{ContentTable}}ListResponse {{ContentTable}}ListCms(MyHeader header, {{ContentTable}}ListOptions rq)
+        {
+
+            {{ContentTable}}ListResponse results = new {{ContentTable}}ListResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    IQueryable<{{ContentTable}}> query = from t in dbCtx.Context.{{ContentTable}}														  				  
+{{FileClassInclude}}{{FieldList_Where}}{{FieldList_WhereTextSearch}} &&														  
+														  (t.StatusFlag != (int)EnumCmsContentStatus.Deleted || (t.StatusFlag == (int)EnumCmsContentStatus.Deleted && rq.includeDeleted))
+                                                          select t;
+					
+					// Paging
+                    if (rq.paging == null)
+                    {
+                        results.items = query.OrderBy(rq.sqlOrderByExpression).ToList();
+                    }
+                    else
+                    {
+                        results.paging = new Paging();
+                        results.paging.PageSize = rq.paging.PageSize <= 0 ? 20 : rq.paging.PageSize;
+                        results.paging.PageNumber = rq.paging.PageNumber >= 0 ? rq.paging.PageNumber : 0;
+                        results.paging.TotalRows = query.Count();
+                        results.paging.TotalPages = (int)Math.Ceiling((double)results.paging.TotalRows / (double)results.paging.PageSize);
+                        results.items = query.OrderBy(rq.sqlOrderByExpression).Skip(results.paging.PageNumber * results.paging.PageSize).Take(results.paging.PageSize).ToList();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                results.Ex = ex;
+                results.Error = ex.Message;
+                results.Success = false;
+            }
+            //
+            return results;
+        }
+
+		// ******************************************************************************* //
+        // Prendo un record
+        // ******************************************************************************* //
+        public {{ContentTable}}ItemResponse {{ContentTable}}Get(MyHeader header, String Uid)
+        {
+			return {{ContentTable}}Get(header, System.Convert.ToInt32(Uid));
+		}
+        public {{ContentTable}}ItemResponse {{ContentTable}}Get(MyHeader header, Int32 Uid)
+        {
+
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    result.item = (from t in dbCtx.Context.{{ContentTable}}
+{{FileClassInclude}}
+								where t.Uid == Uid &&
+								(t.StatusFlag != (int)EnumCmsContent.Deleted)
+								select t).FirstOrDefault();
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+            }
+            //
+            return result;
+        }
+
+        // ******************************************************************************* //
+        // Prendo un record
+        // ******************************************************************************* //
+        public {{ContentTable}}ItemResponse {{ContentTable}}GetCms(MyHeader header, String Uid)
+        {
+			return {{ContentTable}}GetCms(header, System.Convert.ToInt32(Uid));
+		}
+        public {{ContentTable}}ItemResponse {{ContentTable}}GetCms(MyHeader header, Int32 Uid)
+        {
+
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    result.item = (from t in dbCtx.Context.{{ContentTable}}
+{{FileClassInclude}}
+								where t.Uid == Uid
+								select t).FirstOrDefault();
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+            }
+            //
+            return result;
+        }
+
+		{{startCommentFrom}}
+		// ******************************************************************************* //
+        // Prendo un record
+        // ******************************************************************************* //
+        public {{ContentTable}}ItemResponse {{ContentTable}}GetFrom(MyHeader header, String Uid_From)
+        {
+
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    result.item = (from t in dbCtx.Context.{{ContentTable}}
+{{FileClassInclude}}
+								where t.Uid_From == Uid_From &&
+								(t.StatusFlag != (int)EnumCmsContent.Deleted)
+								select t).FirstOrDefault();
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+            }
+            //
+            return result;
+        }
+
+		// ******************************************************************************* //
+        // Prendo un record
+        // ******************************************************************************* //
+        public {{ContentTable}}ItemResponse {{ContentTable}}GetFromCms(MyHeader header, String Uid_From)
+        {
+
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    result.item = (from t in dbCtx.Context.{{ContentTable}}
+{{FileClassInclude}}
+								where t.Uid_From == Uid_From
+								select t).FirstOrDefault();
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+            }
+            //
+            return result;
+        }
+		{{endCommentFrom}}
+
+        // ******************************************************************************* //
+        // Prendo un record e salvo la versione precedente
+        // ******************************************************************************* //
+		{{startCommentPublish}}
+		public {{ContentTable}}ItemResponse {{ContentTable}}GetForUpdate(MyHeader header, Int32 uid)
+		{
+			return {{ContentTable}}GetForUpdate(header, uid, "");
+		}
+		public {{ContentTable}}ItemResponse {{ContentTable}}GetForUpdate(MyHeader header, Int32 uid, Int32 cmsHistoryId )
+        {
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            // securit
+            //if (CheckBoAccessToken(new AclPermission("CmsSection", "{{ContentTable}}", true, true, false)) == null)
+            //{
+            //    result.Error = ServiceResponse.ERROR_AUTHORIZATION;
+            //    return result;
+            //}
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    {{ContentTable}} itm = (from t in dbCtx.db.{{ContentTable}}
+{{FileClassInclude}}
+                                 where t.Uid == uid
+                                 select t).FirstOrDefault();
+
+                    // se versione committata
+                    if (itm != null && itm.IsPublished)
+                    {
+                        String json = {{ContentTable}}_db2JSON(itm.Uid);
+                        {{ContentTable}}_AddToHistory(header, json, itm);
+                        itm.VersionCurrent++;
+                        itm.Uid_PublishUser = null;
+                        itm.PublishDate = null;
+                        dbCtx.SaveChanges();
+                    }
+                    //
+                    result.item = itm;
+
+                    // 
+                    if (!String.IsNullOrEmpty(cmsHistoryId))
+                    {
+                        long hId = Int21h.atol(cmsHistoryId);
+                        CmsHistory h = dbCtx.Context.CmsHistory.Where(t => t.Id == hId).FirstOrDefault();
+                        {{ContentTable}} n0 = Int21h.jsonDecode<{{ContentTable}}>(h.SerializedObject);
+                        n0.isStage = true;
+                        n0.VersionCurrent = itm.VersionCurrent;
+                        n0.VersionPublished = itm.VersionPublished;
+                        {{ContentTable}}_Versioning_MoveFromDb(header, uid, n0);
+                        return {{ContentTable}}Get(header, uid);
+                    }
+                }
+                if (result.item != null)
+                {
+                    result.Success = true;
+                }
+                else {
+                    result.Error = "ERROR_NOTFOUND";
+                    result.Success = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+            }
+            //
+            return result;
+        }		
+		{{endCommentPublish}}
+
+        // ******************************************************************************* //
+        // Inserisco o modifico un record
+        // ******************************************************************************* //
+        public {{ContentTable}}ItemResponse {{ContentTable}}Upsert(MyHeader header, {{ContentTable}} data)
+        {
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+                    bool isInsert = true;
+                    if (data.Uid > 0)
+                        isInsert = false;
+
+                    if (data.Uid > 0)
+                    {
+                        result.item = (from t in dbCtx.Context.{{ContentTable}}									  
+{{FileClassInclude}}
+                                       where t.Uid == data.Uid
+                                       select t).FirstOrDefault();
+
+                        if (result.item != null)
+                        {
+							isInsert = false;
+                            result.item.{{Field_UpdateDate}} = DateTime.Now;
+                            result.item.{{Field_UpdateUser}} = header.cmsUserUid;
+							result.item.Uid_CmsNlsContext = header.cmsCmsNlsContext.Uid;
+                        }
+                        else
+                        {
+							isInsert = true;
+                            result.item = new {{ContentTable}}();
+							//result.item.Uid = data.Uid;
+                            result.item.{{Field_CreationUser}} = header.cmsUserUid;
+							result.item.Uid_CmsNlsContext = header.cmsCmsNlsContext.Uid;
+
+							{{startCommentOrd}}
+							Int32? mm = 1;
+							try
+							{
+								mm = (Int32)dbCtx.Context.{{ContentTable}}.Max(m => m.Ord);
+								mm++;
+							}
+							catch
+							{
+	                        
+							}
+							result.item.Ord = (Int32)mm;
+							{{endCommentOrd}}
+
+                            //
+                            if (data.{{Field_CreationDate}}.Equals(DateTime.MinValue))
+                                result.item.{{Field_CreationDate}} = DateTime.Now;
+                            else
+                                result.item.{{Field_CreationDate}} = data.{{Field_CreationDate}};
+                        }
+                    }
+                    else
+                    {
+						isInsert = true;
+                        result.item = new {{ContentTable}}();
+                        result.item.{{Field_CreationUser}} = header.cmsUserUid;
+						result.item.Uid_CmsNlsContext = header.cmsCmsNlsContext.Uid;
+
+						{{startCommentOrd}}
+						Int32? mm = 1;
+						try
+						{
+                            mm = (Int32)(dbCtx.Context.{{ContentTable}}.Max(m => m.Ord));
+                            mm++;
+						}
+						catch
+						{
+	                        
+						}
+						result.item.Ord = (Int32)mm;
+						{{endCommentOrd}}
+
+                        //
+                        if (data.{{Field_CreationDate}}.Equals(DateTime.MinValue))
+                            result.item.{{Field_CreationDate}} = DateTime.Now;
+                        else
+                            result.item.{{Field_CreationDate}} = data.{{Field_CreationDate}};
+
+						//result.item.{{Field_UpdateDate}} = DateTime.Now;
+                    }
+
+                    //
+                    if (result != null)
+                    {
+                        //
+{{FieldList_Upsert}}
+                    }
+
+                    // save data
+                    if (isInsert)
+                        dbCtx.Context.{{ContentTable}}.Add(result.item);
+                    //
+                    dbCtx.Context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+            }
+            //
+            return result;
+        }
+
+		// ******************************************************************************* //
+        // Elimino il record
+        // ******************************************************************************* //
+        public {{ContentTable}}ItemResponse {{ContentTable}}Delete(MyHeader header, {{ContentTable}} data)
+        {
+
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+
+                    result.item = (from t in dbCtx.Context.{{ContentTable}}
+                                   where t.Uid == data.Uid
+                                   select t).FirstOrDefault();
+
+                    if (result != null)
+                    {
+                        result.item.{{Field_UpdateDate}} = DateTime.Now;
+                        result.item.{{Field_UpdateUser}} = header.cmsUserUid;
+                        result.item.StatusFlag = (int)EnumCmsContent.Deleted;
+
+                        //
+                        dbCtx.Context.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                //
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+            }
+            //
+            return result;
+        }       
+
+		// ******************************************************************************* //
+        // Ordino i record
+        // ******************************************************************************* //
+		// -1: mette uid prima di refToUid
+        // +1: mette uid dopo di refToUid
+		{{startCommentOrd}}
+		public {{ContentTable}}ItemResponse {{ContentTable}}SetOrder(MyHeader header, Int32 uid, Int32 refToUid, Int32 action)
+        {
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            //
+            try
+            {
+                // {{ContentTable}}
+                using (MyEntityContext dbCtx = new MyEntityContext())
+                {
+
+					{{ContentTable}} that = dbCtx.Context.{{ContentTable}}.Where(t => t.Uid_CmsNlsContext == header.cmsCmsNlsContext.Uid && t.Uid == uid).FirstOrDefault();
+                    {{ContentTable}} pivot = dbCtx.Context.{{ContentTable}}.Where(t => t.Uid == refToUid).FirstOrDefault();
+
+                    decimal pivot_Ord = pivot.Ord.Value;
+                    //decimal pivot_lOrd = pivot.lOrd;
+
+                    if (action == -1)
+                    {
+                        dbCtx.Context.Database.ExecuteSqlCommand("update {{ContentTable}} set Ord=Ord+1 where Uid_CmsNlsContext='" + that.Uid_CmsNlsContext + "' and Ord>=" + (long)pivot_Ord + " and Uid!='" + uid + "'");
+                        that.Ord = (Int32)pivot_Ord;
+                    }
+                    else if (action == 1)
+                    {
+                        dbCtx.Context.Database.ExecuteSqlCommand("update {{ContentTable}} set Ord=Ord+2 where Uid_CmsNlsContext='" + that.Uid_CmsNlsContext + "' and Ord>" + (long)pivot_Ord + " and Uid!='" + uid + "'");
+                        that.Ord = (Int32)(pivot_Ord + 1);
+                    }
+					else if (action == 0)
+                    {
+                        that.Ord = (Int32)(pivot_Ord + 1);
+                    }
+                   
+					//
+					dbCtx.SaveChanges();
+                }
+                return {{ContentTable}}Get(header, uid);
+            }
+            catch (Exception ex)
+            {
+                //
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+            }
+            //
+            return result;
+        }     
+		{{endCommentOrd}}
+
+		#endregion
+		// ******************************************************************************* //
+        // Pubblico una {{ContentTable}} o rispristino un nuvo record
+        // ******************************************************************************* //
+		#region Publish Method
+		{{startCommentPublish}}
+		private String {{ContentTable}}_Versioning_MoveFromDb(MyHeader header, Int32 _uid, {{ContentTable}} ripristina = null, NewContextInfo newContext = null)
+        {
+            // serializzo/Deserializzo
+            {{ContentTable}} n0 = ripristina != null ? ripristina : Int21h.jsonDecode<{{ContentTable}}>({{ContentTable}}_db2JSON(_uid));
+            if (newContext != null)
+                n0.PrepareForCopy(newContext);
+            // vado sul db di produzione se devo pubbicare, altrimenti su stage
+            using (MyEntityContext dbCtx = new MyEntityContext(ripristina != null || newContext != null, false))
+            {
+                {{ContentTable}} n1 = dbCtx.db.{{ContentTable}}.Where(t => t.Uid == n0.Uid).FirstOrDefault();
+                n1 = {{ContentTable}}_VersionableObjectCopy(n0, n1 == null ? new {{ContentTable}}() : n1) as {{ContentTable}};
+                if (n1.ToAdd)
+                    dbCtx.db.{{ContentTable}}.Add(n1);
+                // immagini
+
+
+                //{{ContentTable}}_PublishRelated<{{ContentTable}}_Models>(ctx, n1, "{{ContentTable}}_Models", "Uid_{{ContentTable}}", n1.__{{ContentTable}}_Models, "Model", "Uid_Model", newContext != null);
+                //{{ContentTable}}_PublishRelated<{{ContentTable}}_Models>(dbCtx, n1, "{{ContentTable}}_Models", "Uid_{{ContentTable}}", n1.__{{ContentTable}}_Models, "Model", "Uid_Model", true); // Ingore constraint
+
+                //
+                dbCtx.db.SaveChanges();
+            }
+            // aggiorno numero di versione corrente nel db di stage
+            using (MyEntityContext dbCtx = new MyEntityContext())
+            {
+                // copia
+                if (newContext != null)
+                {
+                    dbCtx.SqlExecuteNonQuery("update {{ContentTable}} set " +
+                                            "StatusFlag = " + (int)EnumCmsContentStatus.Draft +
+                                            ",Uid_PublishUser = NULL " +
+                                            ",{{Field_UpdateUser}} = '" + header.cmsUserUid + "' " +
+                                            ",{{Field_UpdateDate}} = getdate() " +
+                                            ",PublishDate = NULL " +
+                                            ",VersionPublished = 0 " +
+                                            ",VersionCurrent = 1 " +
+                                            //",PublishOnlineDate = NULL " +
+                                            //",PublishOfflineDate = NULL " +
+                                            "where Uid='" + n0.Uid + "'");
+                }
+                else if (ripristina == null) // PUBBLICAZIONE
+                {
+                    dbCtx.SqlExecuteNonQuery("update {{ContentTable}} set " +
+                                            "VersionPublished = VersionCurrent " +
+                                            ",Uid_PublishUser = '" + header.cmsUserUid + "' " +
+                                            ",PublishDate = getdate() " +
+                                            "where Uid='" + n0.Uid + "'");
+                }
+                else // RECOVER 
+                {
+                    dbCtx.SqlExecuteNonQuery("update {{ContentTable}} set " +
+                                            "StatusFlag = " + (int)EnumCmsContentStatus.Draft +
+                                            ",Uid_PublishUser = NULL " +
+                                            ",{{Field_UpdateUser}} = '" + header.cmsUserUid + "' " +
+                                            ",{{Field_UpdateDate}} = getdate() " +
+                                            ",PublishDate = NULL " +
+                                            //",PublishOnlineDate = NULL " +
+                                            //",PublishOfflineDate = NULL " +
+                                            "where Uid='" + n0.Uid + "'");
+                }
+                dbCtx.SaveChanges();
+                //
+                return n0.Uid;
+            }
+        }
+		{{endCommentPublish}}
+		
+        // ******************************************************************************* //
+        // Copia un record
+        // ******************************************************************************* //
+		{{startCommentPublish}}
+        public {{ContentTable}}ItemResponse {{ContentTable}}Versioning_Copy(MyHeader header, Int32 uid, NewContextInfo ctxInfo)
+        {
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            // securit
+            //if (CheckBoAccessToken(new AclPermission("CmsSection", "{{ContentTable}}", true, false, true)) == null)
+            //{
+            //    result.Error = ServiceResponse.ERROR_AUTHORIZATION;
+            //    return result;
+            //}
+            try
+            {
+                String newUid = {{ContentTable}}_Versioning_MoveFromDb(header, uid, null, ctxInfo);
+                return {{ContentTable}}Get(header, newUid);
+            }
+            catch (ConstraintException ex)
+            {
+                result.Ex = ex;
+                result.Error = "ConstraintException";
+                result.Success = false;
+            }
+            catch (Exception ex)
+            {
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+            }
+            finally
+            {
+                //CacheManager.that.RemoveAllFromCache(header.cmsCmsNlsContext.Uid, "{{ContentTable}}");
+            }
+
+			//
+			return result;
+        }		
+		{{endCommentPublish}}
+		
+        // ******************************************************************************* //
+        // Pubblica una versione
+        // ******************************************************************************* //
+		{{startCommentPublish}}
+        public {{ContentTable}}ItemResponse {{ContentTable}}_Publish(MyHeader header, Int32 uid)
+        {
+            {{ContentTable}}ItemResponse result = new {{ContentTable}}ItemResponse();
+            // securit
+            //if (CheckBoAccessToken(new AclPermission("CmsSection", "{{ContentTable}}", true, false, true)) == null)
+            //{
+            //    result.Error = ServiceResponse.ERROR_AUTHORIZATION;
+            //    return result;
+            //}
+            try
+            {
+                {{ContentTable}}_Versioning_MoveFromDb(header, uid, null);
+                return {{ContentTable}}Get(header, uid);
+            }
+            catch (ConstraintException ex)
+            {
+                result.Ex = ex;
+                result.Error = "ConstraintException";
+                result.Success = false;
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                //
+                result.Ex = ex;
+                result.Error = ex.Message;
+                result.Success = false;
+                return result;
+            }
+            finally
+            {
+                CacheManager.that.RemoveAllFromCacheBO(header.cmsCmsNlsContext, "{{ContentTable}}");
+            }
+        }        
+        // per pubblicare le relazioni
+        public void {{ContentTable}}_PublishRelated<T>(MyEntityContext dbCtx, ICmsVersionable master, String childTableName, String childFieldName, List<T> elements, String constTableName = null, String constFieldName = null, bool ignoreConstraints = false) where T : DbModel.ICmsVersionable, new()
+        {
+            String lst = "'dummy'";
+            String masterUid = master.Key;
+            foreach (T img0 in elements)
+            {
+                {{ContentTable}} img1 = dbCtx.Context.{{ContentTable}}.Where("Uid='" + img0.Key + "'").FirstOrDefault();
+                if (img1 == null)
+                {
+                    img1 = new {{ContentTable}}();
+                    img1.ToAdd = true;
+                }
+                //
+                img1 = ({{ContentTable}}){{ContentTable}}_VersionableObjectCopy(img0, img1);
+                
+                // PATCH
+                if (dbCtx._dummy.ContainsKey(childTableName + "/" + img0.Key))
+                    img1.ToAdd = false;
+                dbCtx._dummy[childTableName + "/" + img0.Key] = true;
+                // END
+
+                if (img1.ToAdd)
+                {
+                    // DEVO VERIFICARE VINCOLI?
+                    if (constTableName != null && constFieldName != null)
+                    {
+                        String refValue = (String)(img1.GetType().GetProperty(constFieldName).GetGetMethod().Invoke(img1, null));
+                        {{ContentTable}} o = dbCtx.Context.{{ContentTable}}.Where("where Uid='" + refValue + "'").FirstOrDefault();
+                        if (o == null)
+                        {
+                            if (img1.SuperStatusFlag == (int)EnumCmsContentStatus.Deleted)
+                            {
+                                img1.ToAdd = false;
+                            }
+                            else if (dbCtx.isProd)
+                            {
+                                using (MyEntityContext ctx1 = new MyEntityContext(true, false))
+                                {
+                                    {{ContentTable}} o1 = dbCtx.Context.{{ContentTable}}.Where("where StatusFlag!=" + (int)(EnumCmsContentStatus.Deleted) + " AND Uid='" + refValue + "'").FirstOrDefault();
+                                    img1.ToAdd = o1 != null;
+                                }
+                            }
+                            if (img1.ToAdd)
+                            {
+                                if (ignoreConstraints)
+                                    img1.ToAdd = false;
+                                else
+                                    throw new ConstraintException(constTableName);
+                            }
+                        }
+                    }
+                    if (img1.ToAdd)
+                    {
+                        dbCtx.Context.{{ContentTable}}.Add(img1);
+                        lst += ",'" + img1.Key + "'";
+                    }
+                }
+                else
+                {
+                    lst += ",'" + img1.Key + "'";
+                }
+            }
+            if (childFieldName != null)
+                dbCtx.SqlExecuteNonQuery("update " + childTableName + " set StatusFlag=" + (int)(EnumCmsContentStatus.Deleted) + " where " + childFieldName + "='" + masterUid + "' and Uid NOT IN(" + lst + ")");
+        }
+		{{endCommentPublish}}
+        #endregion
+
+        #region Add Method	
+		{{startCommentPublish}}
+        private String {{ContentTable}}_db2JSON(Int32 uid)
+        {
+            String json;
+            using (MyEntityContext dbCtx = new MyEntityContext())
+            {
+                {{ContentTable}} itm = (from t in dbCtx.Context.{{ContentTable}}
+{{FileClassInclude}}
+                                       where t.Uid == uid
+                                       select t).FirstOrDefault();
+                json = Int21h.jsonEncode(itm);
+            }
+            return json;
+        }
+		{{endCommentPublish}}
+		{{startCommentPublish}}
+        private long {{ContentTable}}_AddToHistory(MyHeader header, String json, ICmsContent content)
+        {
+            using (MyEntityContext dbCtx = new MyEntityContext())
+            {
+                CmsHistory h = new CmsHistory();
+                h.ContentName = content.ContentName;
+                h.{{Field_CreationDate}} = DateTime.Now;
+                h.{{Field_CreationUser}} = header.cmsUserUid;
+                h.SerializedObject = json;
+                h.Version = content.VersionCurrent;
+                h.PublishDate = content.PublishDate;
+                h.Uid_PublishUser = content.Uid_PublishUser;
+                h.Uid_CmsNlsContext = content.Uid_CmsNlsContext;
+                h.ContentUid = content.Uid;
+                dbCtx.db.CmsHistory.Add(h);
+                dbCtx.SaveChanges();
+                return (long)(h.Id);
+            }
+        }
+        private ICmsVersionable {{ContentTable}}_VersionableObjectCopy(ICmsVersionable source, ICmsVersionable destination)
+        {            //
+            PropertyInfo[] sourceProps = source.GetType().GetProperties(BindingFlags.Public |
+                                                            BindingFlags.IgnoreCase |
+                                                            BindingFlags.Instance |
+                                                            BindingFlags.NonPublic);
+            foreach (PropertyInfo sfld in sourceProps)
+            {
+                object[] attrs = sfld.GetCustomAttributes(true);
+                bool ok = false;
+                for (int i = 0; ok == false && i < attrs.Length; i++)
+                    ok = attrs[i] is Newtonsoft.Json.JsonPropertyAttribute;
+                if (!ok)
+                    continue;
+                PropertyInfo dfld = destination.GetType().GetProperty(sfld.Name,
+                                        BindingFlags.Public |
+                                        BindingFlags.IgnoreCase |
+                                        BindingFlags.Instance |
+                                        BindingFlags.NonPublic);
+                try
+                {
+                    if (dfld != null && sfld.Name.ToLower() != "ord")
+                        dfld.SetValue(destination, sfld.GetValue(source, null), null);
+                }
+                catch
+                {
+
+                }
+            }
+            //
+            return destination;
+        }
+		{{endCommentPublish}}
+        #endregion
+    }
+}
+

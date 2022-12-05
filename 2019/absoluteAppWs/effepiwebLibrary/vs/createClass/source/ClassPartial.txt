@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using DbModel;
+using System.Runtime.Serialization;
+
+namespace dataLibs
+{
+
+    public partial class {{ContentTable}}
+    {
+{{PartialTitle}}
+{{PartialRelated}}
+    }
+}

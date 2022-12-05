@@ -1,0 +1,3 @@
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="action.aspx.cs" Inherits="backOffice.{{lContentTable}}.action" EnableEventValidation="false" MaintainScrollPositionOnPostback="true" ValidateRequest="false" %>
+
+{{TableRelatedDataCode_ActionPage}}

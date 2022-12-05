@@ -1,0 +1,21 @@
+[{
+		"warn-err001": "this is another error"	
+	},
+	{
+		"warn-err001": "this is a nice error"	
+	},
+	{
+		"warn-err001": "this is a so sospicious error"
+	},
+	{
+		"danger-err001": "this is a so sospicious error"
+	},
+	{
+		"danger-err001": "this is a so sospicious error"
+	},
+	{
+		"success-err001": "this is a so sospicious error"
+	},
+	{
+		"success-err001": "this is a so sospicious error"
+}]

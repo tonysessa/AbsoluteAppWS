@@ -1,0 +1,170 @@
+﻿using System;
+using System.Data;
+using System.Configuration;
+using System.Collections;
+using System.Web;
+using System.Web.Security;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.WebParts;
+using System.Web.UI.HtmlControls;
+using System.Xml;
+using System.IO;
+// Support
+using Support.db;
+using Support.Library;
+using Support.CmsFunction;
+using Support.Web;
+//
+using DbModel;
+using dataLibs;
+
+namespace backOffice.support
+{
+    public partial class setOrder : System.Web.UI.Page
+    {
+        #region objUtil
+        protected Support.Library.DateUtil objLibDate = new Support.Library.DateUtil();
+        protected Support.Library.DbUtil objLibDB = new Support.Library.DbUtil();
+        protected Support.Library.StringUtil objLibString = new Support.Library.StringUtil();
+        protected Support.Library.StringSqlUtil objLibSqlString = new Support.Library.StringSqlUtil();
+        protected Support.Library.MathUtil objLibMath = new Support.Library.MathUtil();
+        protected Support.Library.CriptUtil objLibCript = new Support.Library.CriptUtil();
+        protected Support.Library.ImageUtil objLibImage = new Support.Library.ImageUtil();
+		protected Support.Library.FileUtil objFileUtil = new Support.Library.FileUtil();
+        //
+        protected WebContext wctx = null;
+        protected MyHeader header = new MyHeader();
+        protected CmsFunction objCmsFunction = new CmsFunction();
+        protected CmsBoDataLibs objCmsBoDataLibs = new CmsBoDataLibs();
+        #endregion
+
+        #region Parametri
+        public String sCmsStartingpage = WebContext.getConfig("%.cmsStartingpage").ToString();
+		public String sStartingpage = WebContext.getConfig("%.Startingpage").ToString();
+        public String sStoragePublicBaseUrl = WebContext.getConfig("%.storagePublicBaseUrl").ToString();
+        public String sUploadDir = WebContext.getConfig("%.uploaddir").ToString();
+		public String sCmsPath = WebContext.getConfig("%.path").ToString();
+		public String sCryptKey = WebContext.getConfig("%.cryptKey").ToString();
+        #endregion
+
+        #region Property
+		public CmsUserSession currentCmsUserSession
+        {
+            get
+            {
+                if (ViewState["_CmsUserSession"] == null)
+                    return null;
+                else
+                    return (CmsUserSession)ViewState["_CmsUserSession"];
+            }
+            set { ViewState["_CmsUserSession"] = value; }
+        }
+        //
+        public Int32 Uid
+        {
+            get
+            {
+                if (ViewState["_Uid"] == null)
+                    return 0;
+                else
+                    return (Int32)ViewState["_Uid"];
+            }
+            set { ViewState["_Uid"] = value; }
+        }
+        public Int32 RefUid
+        {
+            get
+            {
+                if (ViewState["_RefUid"] == null)
+                    return 0;
+                else
+                    return (Int32)ViewState["_RefUid"];
+            }
+            set { ViewState["_RefUid"] = value; }
+        }
+        public String Action
+        {
+            get
+            {
+                if (ViewState["_Action"] == null)
+                    return "";
+                else
+                    return (String)ViewState["_Action"];
+            }
+            set { ViewState["_Action"] = value; }
+        }
+        public Int32 nAction
+        {
+            get
+            {
+                if (ViewState["_nAction"] == null)
+                    return 0;
+                else
+                    return (Int32)ViewState["_nAction"];
+            }
+            set { ViewState["_nAction"] = value; }
+        }
+        public String Section
+        {
+            get
+            {
+                if (ViewState["_Section"] == null)
+                    return "";
+                else
+                    return (String)ViewState["_Section"];
+            }
+            set { ViewState["_Section"] = value; }
+        }
+        #endregion
+
+        protected void Page_Load(object sender, EventArgs e)
+        {
+			# region Check Login
+            if (Session["CmsUserSession"] != null)
+                currentCmsUserSession = (CmsUserSession)Session["CmsUserSession"];
+            #endregion         
+
+			if (currentCmsUserSession != null)
+            {
+
+				#region Header
+				header.cmsUserUid = currentCmsUserSession.currentUid;
+				header.cmsCmsNlsContext = currentCmsUserSession.currentCmsNlsContext;
+				#endregion
+
+				if (!Page.IsPostBack)
+				{
+				    // QueryString Parameter
+				    String sUid = "" + Request["Uid"];
+				    String sRefUid = "" + Request["Refuid"];                
+
+                    if (objLibMath.isNumber(sUid))
+                        Uid = System.Convert.ToInt32(sUid);
+                    else
+                        sUid = "";
+
+                    if (objLibMath.isNumber(sRefUid))
+                        RefUid = System.Convert.ToInt32(sRefUid);
+                    else
+                        sRefUid = "";
+
+				    // Section
+				    Section = "" + Request["Section"];
+					Action = "" + Request["Action"];
+
+				    if (Action.Equals("prev"))
+				        nAction = -1;
+				    else if (Action.Equals("next"))
+				        nAction = 1;
+
+				    Boolean bReturn = false;
+				    if ((!String.IsNullOrEmpty(sUid)) && (!String.IsNullOrEmpty(sRefUid)))
+				    {                    
+{{ColumnDataCode_SupportPage}}
+				  }
+				}
+			}
+        }
+    }
+} 
